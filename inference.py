@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.nn import functional as F
 from gpt.model import GPTConfig, GPT
 from contextlib import nullcontext
+from manager import Inference
 
 enc = tiktoken.get_encoding("gpt2")
 enc = tiktoken.get_encoding("gpt2")
@@ -31,7 +32,15 @@ if compile:
 
 
 
-def batch_generate(prompts, desired_tokens):
+def batch_generate(batch):
+    desired_tokens = []
+    prompts = []
+    job_ids = []
+    for inference in batch:
+        desired_tokens.append(inference.num_tokens)
+        prompts.append(inference.prompt)
+        job_ids.append(inference.job_id)
+
     assert len(prompts) == len(desired_tokens)
     prompts_and_desired_tokens = list(enumerate(desired_tokens))
     prompts_and_desired_tokens.sort(key=lambda x:x[1], reverse=True) #sort by num tokens
@@ -47,7 +56,7 @@ def batch_generate(prompts, desired_tokens):
         if prompts_and_desired_tokens[-1][1] == tokens_generated:
             prompt_id, desired_tokens = prompts_and_desired_tokens[-1]
             prompt_id = prompt_id - len(results) # find index of finished prompt
-            results.append(stacked[prompt_id])   # append completion to results array
+            results.append(stacked[prompt_id], job_ids[prompt_id])   # append completion to results array
             stacked = torch.cat((stacked[:prompt_id], stacked[prompt_id + 1:])) # remove finished prompt from batch
             prompts_and_desired_tokens.pop()
         if desired_tokens == max_desired_tokens:
@@ -61,4 +70,4 @@ def batch_generate(prompts, desired_tokens):
         idx_next = torch.multinomial(probs, num_samples=1)
         stacked = torch.cat((stacked, idx_next), dim=1)
 
-    return [decode(result.tolist()) for result in results]
+    return [(decode(result.tolist()), job_id) for result, job_id in results]
