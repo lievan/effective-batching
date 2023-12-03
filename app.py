@@ -10,20 +10,8 @@ app = Flask(__name__)
 
 count = 0
 
-def batch_generate(next_batch):
-    global count
-    # stub for testing
-    time.sleep(1)
-    print("running batch_generate for the {}".format(count))
-    count += 1
-    results = []
-    for inference in next_batch:
-        results.append([inference.prompt, inference.job_id])
-    return results
-
-
 manager = InferenceManager()
-run_inferences = Thread(target=manager.trigger_batch)
+run_inferences = Thread(target=manager.trigger_static_batch)
 run_inferences.start()
 
 @app.route('/inference', methods=['POST'])

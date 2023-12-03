@@ -1,4 +1,6 @@
 from threading import Thread, Lock, Event
+from inference import static_batch_generate
+
 class Inference:
     def __init__(self, job_id, prompt, num_tokens):
         self.completion = None
@@ -35,7 +37,7 @@ class InferenceManager:
             self.simple_id += 1
         return new_inference
 
-    def trigger_batch(self):
+    def trigger_static_batch(self):
         while True:
             next_batch = []
             results = []
@@ -43,7 +45,7 @@ class InferenceManager:
                 next_batch = self.queue
                 self.queue = []
             if next_batch:
-                results = batch_generate(next_batch)
+                results = static_batch_generate(next_batch)
                 for result in results:
                     completion, job_id = result
                     self.inferences[job_id].finished(completion)
