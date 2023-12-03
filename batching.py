@@ -114,6 +114,7 @@ class BatchingManager:
                 next_batch = self.queue
                 self.queue = []
             if next_batch:
+                # TO DO - need to make sure prompts have same length
                 results = static_batch_generate(next_batch, self.model)
                 for completion, inference in results:
                     inference.finished_with(completion)
