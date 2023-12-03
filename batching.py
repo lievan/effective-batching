@@ -78,7 +78,7 @@ def dynamic_batch_generate(self, next_batch, model):
             in_progress.append(inference)
     return finished, in_progress
 
-class StaticBatching:
+class BatchingManager:
     def __init__(self, model):
         self.queue_mutex = Lock()
         self.queue = {} # queue needs to track sizes 
