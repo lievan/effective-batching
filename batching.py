@@ -1,7 +1,9 @@
-from threading import Thread, Lock, Event
+from threading import Lock
 import torch
 from torch.nn import functional as F
 from inference import Inference
+from collections import defaultdict
+import time
 
 def generate(inference, model):
     # completes generation for a single inference
@@ -54,8 +56,7 @@ def static_batch_generate(batch, model):
     return [(model.decode(result.tolist()), inference) for result, inference in results]
 
 
-
-def dynamic_batch_generate(self, next_batch, model):
+def dynamic_batch_generate(next_batch, model):
     if len(next_batch) == 0:
         return None, None
 
@@ -113,11 +114,16 @@ class BatchingManager:
             with self.queue_mutex:
                 next_batch = self.queue
                 self.queue = []
+    
             if next_batch:
-                # TO DO - need to make sure prompts have same length
-                results = static_batch_generate(next_batch, self.model)
-                for completion, inference in results:
-                    inference.finished_with(completion)
+                input_lengths = defaultdict(list)
+                for inference in next_batch:
+                    input_lengths[len(inference.data)].append(inference)
+                for _, batch in input_lengths.items():
+                    results = static_batch_generate(batch, self.model)
+                    for completion, inference in results:
+                        inference.finished_with(completion)
+            time.sleep(0.1) # wait 0.1 seconds to collect the next batch
 
     def dynamic_batching_loop(self):
         waiting = []
