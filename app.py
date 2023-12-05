@@ -25,6 +25,8 @@ def stats():
 
 @app.route('/inference', methods=['POST'])
 def inference():
+    print("got a request")
+
     # request processing
     data = json.loads(request.get_data())
     prompt = data['prompt']
@@ -78,4 +80,4 @@ if __name__ == '__main__':
     run_inferences.start()
 
 
-    app.run(host='0.0.0.0', port=105, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

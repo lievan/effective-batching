@@ -10,6 +10,7 @@ class Inference:
         self.completion = None
         self.job_id = job_id
         self.enc = enc
+        self.prompt = prompt
         self.data = torch.tensor(self.enc.encode(prompt), dtype=torch.long, device=device)
         self.num_tokens = num_tokens
         self.counter = 0 # counter to keep track of when prompt is finished
@@ -28,6 +29,7 @@ class Inference:
 
     def finished_with(self, completion):
         self.completion = completion
+        print("completion finished, setting event obj")
         self.event_obj.set()
 
     def wait_for_completion(self):
@@ -38,7 +40,7 @@ class Inference:
 class BatchingManager:
     def __init__(self, model, generation_fn):
         self.queue_mutex = Lock()
-        self.queue = {} # queue needs to track sizes 
+        self.queue = []
         self.running_inference = Lock()
         self.simple_id = 0
         self.inferences = {}
@@ -55,18 +57,21 @@ class BatchingManager:
         return new_inference
 
     def no_batching_loop(self):
+        self.model.model.to(self.model.device)
         while True:
             next_batch = []
             with self.queue_mutex:
                 next_batch = self.queue
                 self.queue = []
             if next_batch:
+                print("got a new request")
                 for inference in next_batch:
                     completion = self.generation_fn(inference, self.model)
                     inference.finished_with(completion)
             time.sleep(0.01)
 
     def static_batching_loop(self):
+        self.model.model.to(self.model.device)
         while True:
             next_batch = []
             results = []
@@ -75,16 +80,17 @@ class BatchingManager:
                 self.queue = []
     
             if next_batch:
-                input_lengths = defaultdict(list)
-                for inference in next_batch:
-                    input_lengths[len(inference.data)].append(inference)
-                for _, batch in input_lengths.items():
+                sizes = defaultdict(list)
+                for item in next_batch:
+                    sizes[len(item.data)].append(item)
+                for _, batch in sizes.items():
                     results = self.generation_fn(batch, self.model)
                     for completion, inference in results:
-                        inference.finished_with(completion)
+                        inference.finished_with(completion)                         
             time.sleep(0.01) # wait 0.1 seconds to collect the next batch
 
     def dynamic_batching_loop(self):
+        self.model.model.to(self.model.device)
         waiting = []
         while True:
             with self.queue_mutex:

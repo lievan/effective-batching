@@ -9,9 +9,8 @@ prompt_data = PromptData(num_samples=NUM_SAMPLES)
 
 def inference_request(prompt, num_tokens):
     inference_req = {'prompt':prompt, 'num_tokens':num_tokens}
-    r = requests.post('http://127.0.0.1:105/inference', json=inference_req)
+    r = requests.post('http://127.0.0.1:8000/inference', json=inference_req)
     print(r.json()['completion'])
-
 
 threads = []
 for i in range(NUM_SAMPLES):
@@ -26,7 +25,7 @@ for thread in threads:
 for thread in threads:
     thread.join()
 
-r = requests.get('http://127.0.0.1:105/stats')
+r = requests.get('http://127.0.0.1:8000/stats')
 print("\n\n=== END STATS===\n\n")
 print(r.json())
 

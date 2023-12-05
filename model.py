@@ -60,14 +60,12 @@ class DynamicBatchingServerModel(ServerModel):
     def batch_inference_forward(self, encoded_tensors, prompt_lengths):
 
         idx = torch.stack([torch.concat(encoded_tensors)])
-
         #   b, t = idx.size()
-
         tok_emb = self.model.transformer.wte(idx) # token embeddings of shape (b, t, n_embd)
 
         pos_embeddings = []
         for p_len in prompt_lengths:
-            pos = torch.arange(0, p_len, dtype=torch.long, device=self.model.device) # shape (p_len)
+            pos = torch.arange(0, p_len, dtype=torch.long, device=self.device) # shape (p_len)
             pos_embed = self.model.transformer.wpe(pos)
             pos_embeddings.append(pos_embed)
 
