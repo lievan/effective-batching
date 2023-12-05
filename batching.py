@@ -64,6 +64,7 @@ class BatchingManager:
                 for inference in next_batch:
                     completion = self.generation_fn(inference, self.model)
                     inference.finished_with(completion)
+            time.sleep(0.01)
 
     def static_batching_loop(self):
         while True:
@@ -81,7 +82,7 @@ class BatchingManager:
                     results = self.generation_fn(batch, self.model)
                     for completion, inference in results:
                         inference.finished_with(completion)
-            time.sleep(0.1) # wait 0.1 seconds to collect the next batch
+            time.sleep(0.01) # wait 0.1 seconds to collect the next batch
 
     def dynamic_batching_loop(self):
         waiting = []
@@ -95,3 +96,4 @@ class BatchingManager:
                 for result in finished:
                     result.finished()
                     waiting = in_progress
+            time.sleep(0.01)

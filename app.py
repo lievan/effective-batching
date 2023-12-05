@@ -7,7 +7,7 @@ from flask import Flask, request
 from batching import BatchingManager
 from threading import Thread
 from stats import ServerStats
-from model_init import load_base_model_config, ServerModel, DynamicBatchingServerModel
+from model import load_base_model_config, ServerModel, DynamicBatchingServerModel
 import tiktoken
 
 from generate.generate import static_batch_generate, generate, dynamic_batch_generate
