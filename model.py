@@ -1,5 +1,3 @@
-import os
-
 import tiktoken
 import torch
 from gpt.model import GPT
