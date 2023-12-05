@@ -3,7 +3,7 @@ from collections import defaultdict
 import time
 import torch
 from threading import Event
-import tiktoken
+
 
 class Inference:
     def __init__(self, job_id, prompt, num_tokens, enc, device):
@@ -78,7 +78,7 @@ class BatchingManager:
                 for inference in next_batch:
                     input_lengths[len(inference.data)].append(inference)
                 for _, batch in input_lengths.items():
-                    results =  self.generation_fn(batch, self.model)
+                    results = self.generation_fn(batch, self.model)
                     for completion, inference in results:
                         inference.finished_with(completion)
             time.sleep(0.1) # wait 0.1 seconds to collect the next batch
