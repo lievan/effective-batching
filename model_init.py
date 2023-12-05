@@ -7,7 +7,7 @@ from gpt.model import GPT
 
 def load_base_model_config():
     enc = tiktoken.get_encoding("gpt2")
-    init_from = 'gpt2-small' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
+    init_from = 'gpt2-medium' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
     seed = 1337
     device = 'cuda' if torch.cuda.is_available() else 'cpu' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
     dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'

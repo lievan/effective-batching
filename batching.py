@@ -1,97 +1,55 @@
 from threading import Lock
-import torch
-from torch.nn import functional as F
-from inference import Inference
 from collections import defaultdict
 import time
+import torch
+from threading import Event
+import tiktoken
 
-def generate(inference, model):
-    # completes generation for a single inference
-    encoding = model.encode(inference.prompt)
-    stacked = torch.stack([torch.tensor(encoding, dtype=torch.long, device=model.device)])
-    for _ in range(inference.num_tokens):
-        logits, _ = model(stacked)
-        probs = F.softmax(logits, dim=-1)
-        probs = torch.reshape(probs, (len(probs), 50257))
-        idx_next = torch.multinomial(probs, num_samples=1)
-        stacked = torch.cat((stacked, idx_next), dim=1)
-    return model.decode(stacked.tolist())
+class Inference:
+    def __init__(self, job_id, prompt, num_tokens, enc, device):
+        self.completion = None
+        self.job_id = job_id
+        self.enc = enc
+        self.data = torch.tensor(self.enc.encode(prompt), dtype=torch.long, device=device)
+        self.num_tokens = num_tokens
+        self.counter = 0 # counter to keep track of when prompt is finished
+        self.event_obj = Event()
 
-def static_batch_generate(batch, model):
-    # completes generation for batch inference
-    desired_tokens = []
-    prompts = []
-    for inference in batch:
-        desired_tokens.append(inference.num_tokens)
-        prompts.append(inference.prompt)
+    def add_token(self, token):
+      self.counter += 1
+      self.data = torch.cat((self.data, token))
+      if self.counter == self.num_tokens:
+        return True
+      return False
 
-    assert len(prompts) == len(desired_tokens)
-    prompts_and_desired_tokens = list(enumerate(desired_tokens))
-    prompts_and_desired_tokens.sort(key=lambda x:x[1], reverse=True) #sort by num tokens
-    encoded_prompts = model.enc.encode_batch(prompts)
-    stacked = torch.stack([torch.tensor(start_ids, dtype=torch.long, device=model.device) for start_ids in encoded_prompts])
+    def finished(self):
+        self.completion = self.enc.decode(self.data.tolist())
+        self.event_obj.set()
 
-    results = []
-    tokens_generated = 0
-    max_desired_tokens = max(desired_tokens)
-    for tokens_generated in range(max_desired_tokens + 1):
+    def finished_with(self, completion):
+        self.completion = completion
+        self.event_obj.set()
 
-        if prompts_and_desired_tokens[-1][1] == tokens_generated:
-            prompt_id, desired_tokens = prompts_and_desired_tokens[-1]
-            prompt_id = prompt_id - len(results) # find index of finished prompt
-            results.append(stacked[prompt_id], batch[prompt_id])   # append completion to results array
-            stacked = torch.cat((stacked[:prompt_id], stacked[prompt_id + 1:])) # remove finished prompt from batch
-            prompts_and_desired_tokens.pop()
-        if desired_tokens == max_desired_tokens:
-            break
-
-        logits, _ = model(stacked)
-        # temp scaling not implemented
-        # top k not implemented
-        probs = F.softmax(logits, dim=-1)
-        probs = torch.reshape(probs, (len(probs), 50257))
-        idx_next = torch.multinomial(probs, num_samples=1)
-        stacked = torch.cat((stacked, idx_next), dim=1)
-
-    return [(model.decode(result.tolist()), inference) for result, inference in results]
-
-
-def dynamic_batch_generate(next_batch, model):
-    if len(next_batch) == 0:
-        return None, None
-
-    prompt_lengths = [len(inf.data) for inf in next_batch]
-    inference_data = [inf.data for inf in next_batch]
-
-    logits = model.batch_inference_forward(inference_data, prompt_lengths)
-    logits = logits[:, -1, :]
-    probs = F.softmax(logits, dim=-1)
-    probs = torch.reshape(probs, (len(probs), 50257))
-    idx_next = torch.multinomial(probs, num_samples=1)
-
-    finished = []
-    in_progress = []
-    for inference, idx in zip(next_batch, idx_next):
-        done = inference.add_token(idx)
-        if done:
-            finished.append(inference)
-        else:
-            in_progress.append(inference)
-    return finished, in_progress
+    def wait_for_completion(self):
+        print("waiting for completion for job id {}".format(self.job_id))
+        self.event_obj.wait(1000)
+        return self.completion
 
 class BatchingManager:
-    def __init__(self, model):
+    def __init__(self, model, generation_fn):
         self.queue_mutex = Lock()
         self.queue = {} # queue needs to track sizes 
         self.running_inference = Lock()
         self.simple_id = 0
         self.inferences = {}
         self.model = model
+        self.generation_fn = generation_fn
 
     def enqueue(self, prompt, num_tokens):
         new_inference = None
         with self.queue_mutex:
-            new_inference = Inference(self.simple_id, prompt, num_tokens)
+            new_inference = Inference(self.simple_id, prompt, num_tokens, 
+                                    self.model.enc, self.model.device)
             self.queue.append(new_inference)
             self.simple_id += 1
         return new_inference
@@ -104,7 +62,7 @@ class BatchingManager:
                 self.queue = []
             if next_batch:
                 for inference in next_batch:
-                    completion = generate(inference, self.model)
+                    completion = self.generation_fn(inference, self.model)
                     inference.finished_with(completion)
 
     def static_batching_loop(self):
@@ -120,7 +78,7 @@ class BatchingManager:
                 for inference in next_batch:
                     input_lengths[len(inference.data)].append(inference)
                 for _, batch in input_lengths.items():
-                    results = static_batch_generate(batch, self.model)
+                    results =  self.generation_fn(batch, self.model)
                     for completion, inference in results:
                         inference.finished_with(completion)
             time.sleep(0.1) # wait 0.1 seconds to collect the next batch
@@ -133,7 +91,7 @@ class BatchingManager:
                 self.queue = []
                 waiting += next_batch
             if waiting:
-                finished, in_progress = dynamic_batch_generate(waiting, self.model)
+                finished, in_progress = self.generation_fn(waiting, self.model)
                 for result in finished:
                     result.finished()
                     waiting = in_progress

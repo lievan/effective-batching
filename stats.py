@@ -3,10 +3,13 @@ import torch
 import time
 from threading import Lock
 
+cuda_time = torch.cuda.is_available()
+
 def get_time():
-    # helper function needed for C2-C7
-    torch.cuda.synchronize()
-    return time.perf_counter()
+    if cuda_time:
+        torch.cuda.synchronize()
+        return time.perf_counter()
+    return time.time()
 
 class ServerStats:
 
@@ -23,12 +26,12 @@ class ServerStats:
 
     def get_new_rid(self):
         new_rid = -1
-        with self.rid_lock.acquire:
+        with self.rid_lock:
             new_rid = self.rid
             self.rid += 1
         return new_rid
 
-    def start_request(self, rid, num_tokens):
+    def start_request(self, num_tokens):
         new_rid = self.get_new_rid()
         self.table[new_rid] = (get_time(), num_tokens)
         return new_rid
