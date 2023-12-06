@@ -23,6 +23,10 @@ def stats():
     throughput = server_stats.throughput()
     return {'latency-per-token': latency_per_token, 'throughput': throughput}
 
+@app.route('/', methods=['POST'])
+def home():
+    return 'hello'
+
 @app.route('/inference', methods=['POST'])
 def inference():
     # request processing
@@ -76,4 +80,4 @@ if __name__ == '__main__':
     run_inferences.start()
 
 
-    app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=8500, debug=True, threaded=True)
