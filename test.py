@@ -10,10 +10,10 @@ model = DynamicBatchingServerModel(model, enc, device)
 manager = BatchingManager(model, dynamic_batch_generate)
 run_inferences = Thread(target=manager.dynamic_batching_loop)
 run_inferences.start()
-print("run inferences thread started")
 
 prompt = "hi"
 num_tokens = 10
 inference = manager.enqueue(prompt, num_tokens)
+inference = manager.enqueue("yo", 3)
+inference = manager.enqueue("bro", 6)
 completion = inference.wait_for_completion()
-print(completion)

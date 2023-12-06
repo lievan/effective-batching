@@ -25,8 +25,6 @@ def stats():
 
 @app.route('/inference', methods=['POST'])
 def inference():
-    print("got a request")
-
     # request processing
     data = json.loads(request.get_data())
     prompt = data['prompt']
@@ -55,8 +53,6 @@ if __name__ == '__main__':
         gpt_model, enc, device = load_base_model_config()
         gpt_model.eval()
         gpt_model.to(device)
-        if compile:
-            gpt_model = torch.compile(gpt_model) # requires PyTorch 2.0 (optional)
     else:
         gpt_model = None
         enc = tiktoken.get_encoding("gpt2")
@@ -68,12 +64,12 @@ if __name__ == '__main__':
         manager = BatchingManager(model, generate)
         run_inferences = Thread(target=manager.no_batching_loop)
     elif args.batching == "static":
-        model = DynamicBatchingServerModel(gpt_model, enc, device)
+        model = ServerModel(gpt_model, enc, device)
         static_batch_generate = static_batch_generate if not args.mock else mock_static_batch_generate
         manager = BatchingManager(model, static_batch_generate)
         run_inferences = Thread(target=manager.static_batching_loop)
     elif args.batching == "dynamic":
-        model = ServerModel(gpt_model, enc, device)
+        model = DynamicBatchingServerModel(gpt_model, enc, device)
         dynamic_batch_generate = dynamic_batch_generate if not args.mock else mock_dynamic_batch_generate
         manager = BatchingManager(model, dynamic_batch_generate)
         run_inferences = Thread(target=manager.dynamic_batching_loop)

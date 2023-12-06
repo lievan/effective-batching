@@ -64,7 +64,6 @@ class BatchingManager:
                 next_batch = self.queue
                 self.queue = []
             if next_batch:
-                print("got a new request")
                 for inference in next_batch:
                     completion = self.generation_fn(inference, self.model)
                     inference.finished_with(completion)

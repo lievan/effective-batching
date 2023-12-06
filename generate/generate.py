@@ -58,11 +58,8 @@ def dynamic_batch_generate(next_batch, model):
         return None, None
 
     prompt_lengths = [len(inf.data) for inf in next_batch]
-    
-    model.model.to(model.device)
 
     inference_data = [inf.data for inf in next_batch]
-
     logits = model.batch_inference_forward(inference_data, prompt_lengths)
     logits = logits[:, -1, :]
     probs = F.softmax(logits, dim=-1)

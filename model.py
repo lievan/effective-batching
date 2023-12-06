@@ -9,7 +9,6 @@ def load_base_model_config():
     seed = 1337
     device = 'cuda' if torch.cuda.is_available() else 'cpu' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
     dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32' or 'bfloat16' or 'float16'
-    compile = False # use PyTorch 2.0 to compile the model to be faster
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
@@ -41,16 +40,13 @@ class DynamicBatchingServerModel(ServerModel):
         k = k.view(B, T, attn.n_head, C // attn.n_head).transpose(1, 2) # (B, nh, T, hs)
         q = q.view(B, T, attn.n_head, C // attn.n_head).transpose(1, 2) # (B, nh, T, hs)
         v = v.view(B, T, attn.n_head, C // attn.n_head).transpose(1, 2) # (B, nh, T, hs)
-
         k_split = torch.split(k, prompt_lengths, 2) # split along dim T in chunks of prompt_lengths
         q_split = torch.split(q, prompt_lengths, 2)
         v_split = torch.split(v, prompt_lengths, 2)
-
         outs = []
         for k, q, v in zip(k_split, q_split, v_split):
             y = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=None, dropout_p=0, is_causal=True) 
-        outs.append(y)
-
+            outs.append(y)
         y = torch.concat(outs, dim=2)
         y = y.transpose(1, 2).contiguous().view(B, T, C) # re-assemble all head outputs side by side
         y = attn.resid_dropout(attn.c_proj(y))
