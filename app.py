@@ -2,6 +2,7 @@ import json
 import time
 import torch
 import argparse
+import os
 
 from flask import Flask, request
 from batching import BatchingManager
@@ -12,6 +13,12 @@ import tiktoken
 
 from generate.generate import static_batch_generate, generate, dynamic_batch_generate
 from generate.generate_mock import mock_generate, mock_dynamic_batch_generate, mock_static_batch_generate
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+KEY = os.getenv('KEY')
 
 app = Flask(__name__)
 
@@ -30,7 +37,12 @@ def home():
 @app.route('/inference', methods=['POST'])
 def inference():
     # request processing
+    key = request.headers.get('Authorization')
+    if key != KEY:
+        return 'no'
+
     data = json.loads(request.get_data())
+    
     prompt = data['prompt']
     num_tokens = int(data['num_tokens'])
     assert isinstance(prompt, str)
