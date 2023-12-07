@@ -1,1 +1,1 @@
-{'latency-per-token': 0.04934238605851372, 'throughput': 21.855525537670548}
+{'latency-per-token': 0.05006269106822732, 'throughput': 18.851092291622425, 'total-elapsed-time': 275.79303732497647, 'total-tokens-handled': 5199}
