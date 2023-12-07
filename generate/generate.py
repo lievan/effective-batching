@@ -1,7 +1,7 @@
 import torch
 from torch.nn import functional as F
 
-LOGGING = True
+LOGGING = False
 
 @torch.no_grad()
 def generate(inference, model):
