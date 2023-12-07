@@ -60,12 +60,8 @@ class BatchingManager:
         while True:
             next_batch = []
             with self.queue_mutex:
-                if len(self.queue) > MAX_BATCH_SIZE:
-                    next_batch = self.queue[:MAX_BATCH_SIZE]
-                    self.queue = self.queue[MAX_BATCH_SIZE:]
-                else:
-                    next_batch = self.queue
-                    self.queue = []
+                next_batch = self.queue
+                self.queue = []
             if next_batch:
                 print("SERVER LOGS: Loop handling {} requests".format(len(next_batch)))
                 for inference in next_batch:
@@ -79,12 +75,8 @@ class BatchingManager:
             next_batch = []
             results = []
             with self.queue_mutex:
-                if len(self.queue) > MAX_BATCH_SIZE:
-                    next_batch = self.queue[:MAX_BATCH_SIZE]
-                    self.queue = self.queue[MAX_BATCH_SIZE:]
-                else:
-                    next_batch = self.queue
-                    self.queue = []
+                next_batch = self.queue
+                self.queue = []
 
             if next_batch:
                 print("SERVER LOGS: Loop handling {} requests".format(len(next_batch)))
@@ -100,19 +92,18 @@ class BatchingManager:
     def dynamic_batching_loop(self):
         self.model.model.to(self.model.device)
         waiting = []
-        next_batch = []
         while True:
             with self.queue_mutex:
-                waiting += self.queue
-                self.queue = []
-                if len(waiting) > MAX_BATCH_SIZE:
-                    next_batch = waiting[:MAX_BATCH_SIZE]
-                    waiting = waiting[MAX_BATCH_SIZE:]
+                if len(self.queue) > MAX_BATCH_SIZE:
+                    next_batch = self.queue[:MAX_BATCH_SIZE]
+                    self.queue = self.queue[MAX_BATCH_SIZE:]
                 else:
-                    next_batch = waiting
-            if next_batch:
-                finished, in_progress = self.generation_fn(next_batch, self.model)
+                    next_batch = self.queue
+                    self.queue = []
+                waiting += next_batch
+            if waiting:
+                finished, in_progress = self.generation_fn(waiting, self.model)
                 for result in finished:
                     result.finished()
-                    waiting += in_progress
+                    waiting = in_progress
             time.sleep(0.01)
