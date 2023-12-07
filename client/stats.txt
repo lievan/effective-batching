@@ -1,1 +1,1 @@
-{'latency-per-token': None, 'throughput': None, 'total-elapsed-time': 0, 'total-tokens-handled': 0}
+{'latency-per-token': 0.05006269106822732, 'throughput': 18.851092291622425, 'total-elapsed-time': 275.79303732497647, 'total-tokens-handled': 5199}

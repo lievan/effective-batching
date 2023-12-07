@@ -12,7 +12,7 @@ load_dotenv()
 KEY = os.getenv('KEY')
 IP = os.getenv('IP')
 
-NUM_SAMPLES=10
+NUM_SAMPLES=100
 
 prompt_data = PromptData(num_samples=NUM_SAMPLES)
 
@@ -35,7 +35,7 @@ for i in range(NUM_SAMPLES):
     threads.append(run_inference)
     if i % 5:
         wait = random.random()
-        time.sleep(wait)
+        time.sleep(wait * 5)
 
 for thread in threads:
     thread.join()

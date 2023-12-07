@@ -1,15 +1,13 @@
-import numpy
 from numpy import random
 import math
 from threading import Lock
-import time
 
 class PromptData():
-    
+
   def __init__(self, num_samples):
       self.prompts = []
       print("Generating prompt samples...")
-      self.generate_samples_normal(num_samples)
+      self.generate_samples_range(num_samples, list((i * i for i in range(2, 4))))
       self.prompt_idx = 0
       self.prompt_idx_lock = Lock()
 
@@ -21,11 +19,11 @@ class PromptData():
             self.prompt_idx += 1
       return next_sample
 
-  def generate_samples_range(self, num_samples, range):
+  def generate_samples_range(self, num_samples, num_tokens_range):
       for i in range(num_samples):
-          target = random.choice(range)
-          prompt_len = max(1, abs(math.ceil(target)))
-          num_tokens = max(1, abs(math.ceil(target)))
+          target = int(random.choice(num_tokens_range))
+          prompt_len = target
+          num_tokens = target
           prompt = ""
           for i in range(prompt_len):
             prompt += "{} ".format(i)
