@@ -29,15 +29,14 @@ class Inference:
 
     def finished_with(self, completion):
         self.completion = completion
-        print("completion finished, setting event obj")
         self.event_obj.set()
 
     def wait_for_completion(self):
-        print("waiting for completion for job id {}".format(self.job_id))
         self.event_obj.wait(1000)
         return self.completion
 
 class BatchingManager:
+    MAX_BATCH_SIZE = 32
     def __init__(self, model, generation_fn):
         self.queue_mutex = Lock()
         self.queue = []
@@ -64,6 +63,7 @@ class BatchingManager:
                 next_batch = self.queue
                 self.queue = []
             if next_batch:
+                print("SERVER LOGS: Loop handling {} requests".format(len(next_batch)))
                 for inference in next_batch:
                     completion = self.generation_fn(inference, self.model)
                     inference.finished_with(completion)
@@ -79,14 +79,15 @@ class BatchingManager:
                 self.queue = []
     
             if next_batch:
+                print("SERVER LOGS: Loop handling {} requests".format(len(next_batch)))
                 sizes = defaultdict(list)
                 for item in next_batch:
-                    sizes[len(item.data)].append(item)
+                    sizes[(len(item.data), item.num_tokens)].append(item)
                 for _, batch in sizes.items():
                     results = self.generation_fn(batch, self.model)
                     for completion, inference in results:
                         inference.finished_with(completion)                         
-            time.sleep(0.01) # wait 0.1 seconds to collect the next batch
+            time.sleep(0.01)
 
     def dynamic_batching_loop(self):
         self.model.model.to(self.model.device)

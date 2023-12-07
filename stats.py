@@ -47,14 +47,18 @@ class ServerStats:
 
     def latency_per_token(self):
         # average time a user has to wait for an individual token
-        ret = -1
+        ret = None
+        if self.total_requests <= 0:
+            return ret
         with self.stats_lock:
             ret = self.total_latency/self.total_requests
         return ret
 
     def throughput(self):
         # the number of output tokens per second the inference server generates
-        ret = -1
+        ret = None
+        if self.total_elapsed <= 0:
+            return ret
         with self.stats_lock:
             ret = self.total_tokens/self.total_elapsed
         return ret

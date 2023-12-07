@@ -1,21 +1,54 @@
 import torch
 from torch.nn import functional as F
 
+LOGGING = False
+
 @torch.no_grad()
 def generate(inference, model):
     # completes generation for a single inference
     encoding = model.encode(inference.prompt)
     stacked = torch.stack([torch.tensor(encoding, dtype=torch.long, device=model.device)])
+    if LOGGING: print("INFERENCE LOGS: Making inference (no batching): ")
     for _ in range(inference.num_tokens):
         logits, _ = model.model(stacked)
         probs = F.softmax(logits, dim=-1)
         probs = torch.reshape(probs, (len(probs), 50257))
         idx_next = torch.multinomial(probs, num_samples=1)
         stacked = torch.cat((stacked, idx_next), dim=1)
+        if LOGGING: print("[T]")
     return [model.decode(tok.tolist()) for tok in stacked][0]
 
 @torch.no_grad()
 def static_batch_generate(batch, model):
+    # completes generation for batch inference
+    desired_tokens = []
+    prompts = []
+    for inference in batch:
+        desired_tokens.append(inference.num_tokens)
+        prompts.append(inference.prompt)
+
+    encoded_prompts = model.enc.encode_batch(prompts)
+    stacked = torch.stack([torch.tensor(start_ids, dtype=torch.long, device=model.device) for start_ids in encoded_prompts])
+
+    results = []
+    tokens_generated = 0
+    max_desired_tokens = max(desired_tokens)
+
+    if LOGGING: print("INFERENCE LOGS: Making inference (static batching): ")
+    for _ in range(max_desired_tokens):
+        logits, _ = model.model(stacked)
+        probs = F.softmax(logits, dim=-1)
+        probs = torch.reshape(probs, (len(probs), 50257))
+        idx_next = torch.multinomial(probs, num_samples=1)
+        stacked = torch.cat((stacked, idx_next), dim=1)
+        if LOGGING: print("[T]"*len(stacked))
+    for res, inference in zip(stacked, batch):
+      results.append((model.decode(res.tolist()[:(len(inference.data) + inference.num_tokens)]), inference))
+    return results
+
+@torch.no_grad()
+def static_batch_generate_v2(batch, model):
+    # supports different num_tokens for the batch
     # completes generation for batch inference
     desired_tokens = []
     prompts = []
@@ -65,7 +98,8 @@ def dynamic_batch_generate(next_batch, model):
     probs = F.softmax(logits, dim=-1)
     probs = torch.reshape(probs, (len(probs), 50257))
     idx_next = torch.multinomial(probs, num_samples=1)
-
+    if LOGGING: print("INFERENCE LOGS: Making inference (dynamic batching): ")
+    if LOGGING: print("[T]")
     finished = []
     in_progress = []
     for inference, idx in zip(next_batch, idx_next):
@@ -74,4 +108,5 @@ def dynamic_batch_generate(next_batch, model):
             finished.append(inference)
         else:
             in_progress.append(inference)
+    if LOGGING: print("INFERENCE LOGS: in progress {}, finished {}".format(len(in_progress), len(finished)))
     return finished, in_progress

@@ -6,14 +6,16 @@ from generate.generate import static_batch_generate, generate, dynamic_batch_gen
 
 
 model, enc, device = load_base_model_config()
-model = DynamicBatchingServerModel(model, enc, device)
-manager = BatchingManager(model, dynamic_batch_generate)
-run_inferences = Thread(target=manager.dynamic_batching_loop)
+model = ServerModel(model, enc, device)
+manager = BatchingManager(model, static_batch_generate)
+run_inferences = Thread(target=manager.static_batching_loop)
 run_inferences.start()
 
 prompt = "hi"
 num_tokens = 10
-inference = manager.enqueue(prompt, num_tokens)
-inference = manager.enqueue("yo", 3)
-inference = manager.enqueue("bro", 6)
-completion = inference.wait_for_completion()
+inf1 = manager.enqueue(prompt, num_tokens)
+inf2 = manager.enqueue("yo", 3)
+inf3 = manager.enqueue("bro", 6)
+print(inf1.wait_for_completion())
+print(inf2.wait_for_completion())
+print(inf3.wait_for_completion())
