@@ -4,6 +4,7 @@ import time
 import torch
 from threading import Event
 
+MAX_BATCH_SIZE = 32
 
 class Inference:
     def __init__(self, job_id, prompt, num_tokens, enc, device):
@@ -36,7 +37,6 @@ class Inference:
         return self.completion
 
 class BatchingManager:
-    MAX_BATCH_SIZE = 32
     def __init__(self, model, generation_fn):
         self.queue_mutex = Lock()
         self.queue = []
@@ -60,8 +60,12 @@ class BatchingManager:
         while True:
             next_batch = []
             with self.queue_mutex:
-                next_batch = self.queue
-                self.queue = []
+                if len(self.queue) > MAX_BATCH_SIZE:
+                    next_batch = self.queue[:MAX_BATCH_SIZE]
+                    self.queue = self.queue[MAX_BATCH_SIZE:]
+                else:
+                    next_batch = self.queue
+                    self.queue = []
             if next_batch:
                 print("SERVER LOGS: Loop handling {} requests".format(len(next_batch)))
                 for inference in next_batch:
@@ -75,8 +79,12 @@ class BatchingManager:
             next_batch = []
             results = []
             with self.queue_mutex:
-                next_batch = self.queue
-                self.queue = []
+                if len(self.queue) > MAX_BATCH_SIZE:
+                    next_batch = self.queue[:MAX_BATCH_SIZE]
+                    self.queue = self.queue[MAX_BATCH_SIZE:]
+                else:
+                    next_batch = self.queue
+                    self.queue = []
 
             if next_batch:
                 print("SERVER LOGS: Loop handling {} requests".format(len(next_batch)))
@@ -94,8 +102,12 @@ class BatchingManager:
         waiting = []
         while True:
             with self.queue_mutex:
-                next_batch = self.queue
-                self.queue = []
+                if len(self.queue) > MAX_BATCH_SIZE:
+                    next_batch = self.queue[:MAX_BATCH_SIZE]
+                    self.queue = self.queue[MAX_BATCH_SIZE:]
+                else:
+                    next_batch = self.queue
+                    self.queue = []
                 waiting += next_batch
             if waiting:
                 finished, in_progress = self.generation_fn(waiting, self.model)
