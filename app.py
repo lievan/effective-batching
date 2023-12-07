@@ -29,7 +29,8 @@ def stats():
     print("SERVER LOGS: Handling stats request")
     latency_per_token = server_stats.latency_per_token()
     throughput = server_stats.throughput()
-    return {'latency-per-token': latency_per_token, 'throughput': throughput}
+    return {'latency-per-token': latency_per_token, 'throughput': throughput,
+            'total-tokens-handled': server_stats.total_tokens, 'total-elapsed-time': server_stats.total_elapsed}
 
 @app.route('/', methods=['POST'])
 def home():
