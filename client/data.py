@@ -9,7 +9,7 @@ class PromptData():
   def __init__(self, num_samples):
       self.prompts = []
       print("Generating prompt samples...")
-      self.generate_samples(num_samples)
+      self.generate_samples_normal(num_samples)
       self.prompt_idx = 0
       self.prompt_idx_lock = Lock()
 
