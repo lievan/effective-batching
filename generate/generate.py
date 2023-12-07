@@ -1,21 +1,22 @@
 import torch
 from torch.nn import functional as F
 
-LOGGING = False
+LOGGING = True
 
 @torch.no_grad()
 def generate(inference, model):
     # completes generation for a single inference
     encoding = model.encode(inference.prompt)
     stacked = torch.stack([torch.tensor(encoding, dtype=torch.long, device=model.device)])
-    if LOGGING: print("INFERENCE LOGS: Making inference (no batching): ")
+    if LOGGING: print("INFERENCE LOGS: Making inference (no batching): ", end="")
     for _ in range(inference.num_tokens):
         logits, _ = model.model(stacked)
         probs = F.softmax(logits, dim=-1)
         probs = torch.reshape(probs, (len(probs), 50257))
         idx_next = torch.multinomial(probs, num_samples=1)
         stacked = torch.cat((stacked, idx_next), dim=1)
-        if LOGGING: print("[T]")
+        if LOGGING: print("*", end="")
+    if LOGGING: print("")
     return [model.decode(tok.tolist()) for tok in stacked][0]
 
 @torch.no_grad()
@@ -35,13 +36,14 @@ def static_batch_generate(batch, model):
     max_desired_tokens = max(desired_tokens)
 
     if LOGGING: print("INFERENCE LOGS: Making inference (static batching): ")
-    for _ in range(max_desired_tokens):
+    for i in range(max_desired_tokens):
         logits, _ = model.model(stacked)
         probs = F.softmax(logits, dim=-1)
         probs = torch.reshape(probs, (len(probs), 50257))
         idx_next = torch.multinomial(probs, num_samples=1)
         stacked = torch.cat((stacked, idx_next), dim=1)
-        if LOGGING: print("[T]"*len(stacked))
+        if LOGGING and i < 10: print("[{}]".format("*"*len(stacked)))
+        elif i == 11: print(".... [TRUNCATED]")
     for res, inference in zip(stacked, batch):
       results.append((model.decode(res.tolist()[:(len(inference.data) + inference.num_tokens)]), inference))
     return results
@@ -98,8 +100,6 @@ def dynamic_batch_generate(next_batch, model):
     probs = F.softmax(logits, dim=-1)
     probs = torch.reshape(probs, (len(probs), 50257))
     idx_next = torch.multinomial(probs, num_samples=1)
-    if LOGGING: print("INFERENCE LOGS: Making inference (dynamic batching): ")
-    if LOGGING: print("[T]")
     finished = []
     in_progress = []
     for inference, idx in zip(next_batch, idx_next):
@@ -108,5 +108,5 @@ def dynamic_batch_generate(next_batch, model):
             finished.append(inference)
         else:
             in_progress.append(inference)
-    if LOGGING: print("INFERENCE LOGS: in progress {}, finished {}".format(len(in_progress), len(finished)))
+    if LOGGING: print("INFERENCE LOGS: Making inference (dynamic batching) | in progress {}, finished {}".format(len(in_progress), len(finished)))
     return finished, in_progress

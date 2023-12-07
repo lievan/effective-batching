@@ -77,7 +77,7 @@ class BatchingManager:
             with self.queue_mutex:
                 next_batch = self.queue
                 self.queue = []
-    
+
             if next_batch:
                 print("SERVER LOGS: Loop handling {} requests".format(len(next_batch)))
                 sizes = defaultdict(list)

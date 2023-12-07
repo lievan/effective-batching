@@ -49,13 +49,13 @@ def inference():
     num_tokens = int(data['num_tokens'])
     assert isinstance(prompt, str)
 
-    print("SERVER LOGS: NEW, prompt len ~{} | requesting {} tokens".format(len(prompt.split(' '), num_tokens)))
+    print("SERVER LOGS: NEW, prompt len ~{} | requesting {} tokens".format(len(prompt.split(' ')), num_tokens))
     # make inference
     rid = server_stats.start_request(num_tokens)
     inference = manager.enqueue(prompt, num_tokens)
     completion = inference.wait_for_completion()
     server_stats.finish_request(rid)
-    print("SERVER LOGS: FINISHED, prompt len ~{} | requesting {} tokens".format(len(prompt.split(' '), num_tokens)))
+    print("SERVER LOGS: FINISHED, prompt len ~{} | requesting {} tokens".format(len(prompt.split(' ')), num_tokens))
     return {'completion': completion}
 
 if __name__ == '__main__':
@@ -64,9 +64,8 @@ if __name__ == '__main__':
     parser.add_argument('--mock', default=False, type=bool, help='use a mock model')
     parser.add_argument('--log', default=True, type=str, help='logging')
 
-    print("SERVER LOGS: Using batching () strategy".format(args.batching))
-
     args = parser.parse_args()
+    print("SERVER LOGS: Using batching ({}) strategy".format(args.batching))
 
     gpt_model, enc, device = None, None, None
 
