@@ -33,7 +33,7 @@ def stats():
     print("SERVER LOGS: Handling stats request")
     latency_per_token = server_stats.latency_per_token()
     throughput = server_stats.throughput()
-    with open('token_data_{}'.format(BATCHING), 'w') as f:
+    with open('token_data_{}.csv'.format(BATCHING), 'w') as f:
         for data_len, lst in server_stats.token_breakdown().items():
             f.write("{},".format(data_len))
             f.write("{}".format(sum(lst)/len(lst)))
