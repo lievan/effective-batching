@@ -4,7 +4,7 @@ import time
 import torch
 from threading import Event
 
-MAX_BATCH_SIZE = 32
+MAX_BATCH_SIZE = 128
 
 class Inference:
     def __init__(self, job_id, prompt, num_tokens, enc, device):
@@ -84,9 +84,18 @@ class BatchingManager:
                 for item in next_batch:
                     sizes[(len(item.data), item.num_tokens)].append(item)
                 for _, batch in sizes.items():
+
+                    while len(batch) > MAX_BATCH_SIZE:
+                        inference_batch = batch[:MAX_BATCH_SIZE]
+                        batch = batch[MAX_BATCH_SIZE:]
+                        results = self.generation_fn(inference_batch, self.model)
+                        for completion, inference in results:
+                            inference.finished_with(completion)
+
                     results = self.generation_fn(batch, self.model)
                     for completion, inference in results:
-                        inference.finished_with(completion)                         
+                        inference.finished_with(completion)
+      
             time.sleep(0.01)
 
     def dynamic_batching_loop(self):
@@ -94,13 +103,13 @@ class BatchingManager:
         waiting = []
         while True:
             with self.queue_mutex:
-                if len(self.queue) > MAX_BATCH_SIZE:
-                    next_batch = self.queue[:MAX_BATCH_SIZE]
-                    self.queue = self.queue[MAX_BATCH_SIZE:]
+                space = MAX_BATCH_SIZE - len(waiting)
+                if len(self.queue) > space:
+                    waiting += self.queue[:space]
+                    self.queue = self.queue[space:]
                 else:
-                    next_batch = self.queue
+                    waiting += self.queue
                     self.queue = []
-                waiting += next_batch
             if waiting:
                 finished, in_progress = self.generation_fn(waiting, self.model)
                 for result in finished:

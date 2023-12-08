@@ -43,7 +43,7 @@ def static_batch_generate(batch, model):
         idx_next = torch.multinomial(probs, num_samples=1)
         stacked = torch.cat((stacked, idx_next), dim=1)
         if LOGGING and i < 10: print("[{}]".format("*"*len(stacked)))
-        elif i == 11: print(".... [TRUNCATED]")
+        elif LOGGING and i == 11: print(".... [TRUNCATED]")
     for res, inference in zip(stacked, batch):
       results.append((model.decode(res.tolist()[:(len(inference.data) + inference.num_tokens)]), inference))
     return results
