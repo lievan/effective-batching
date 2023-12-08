@@ -1,13 +1,13 @@
 from numpy import random
 import math
 from threading import Lock
-
-class PromptData():
+import random
+class PromptData:
 
   def __init__(self, num_samples):
       self.prompts = []
       print("Generating prompt samples...")
-      self.generate_samples_range(num_samples, list((i * i for i in range(2, 4))))
+      self.generate_samples_buckets()
       self.prompt_idx = 0
       self.prompt_idx_lock = Lock()
 
@@ -31,8 +31,8 @@ class PromptData():
           self.prompts.append((prompt, num_tokens))
 
   def generate_samples_normal(self, num_samples):
-      possible_num_tokens = random.normal(loc=100, size=(num_samples), scale=100)
-      possible_prompt_len = random.normal(loc=100, size=(num_samples), scale=100)
+      possible_num_tokens = random.normal(loc=100, size=(num_samples), scale=150)
+      possible_prompt_len = random.normal(loc=100, size=(num_samples), scale=150)
 
       for prompt_len, num_tokens in zip(possible_num_tokens, possible_prompt_len):
           prompt_len = max(1, abs(math.ceil(prompt_len)))
@@ -41,4 +41,15 @@ class PromptData():
           for i in range(prompt_len):
             prompt += "{} ".format(i)
           prompt = prompt.strip()
+          self.prompts.append((prompt, num_tokens))
+          
+  def generate_samples_buckets(self):
+      buckets = [i for i in range(5, 150, 5)]
+      vals = []
+      for bucket in buckets:
+            for _ in range(10):
+              vals.append(bucket)
+      random.shuffle(vals)
+      for num_tokens in vals:
+          prompt = ""
           self.prompts.append((prompt, num_tokens))
