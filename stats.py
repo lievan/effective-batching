@@ -2,6 +2,7 @@
 import torch
 import time
 from threading import Lock
+from collections import defaultdict
 
 cuda_time = torch.cuda.is_available()
 
@@ -24,6 +25,8 @@ class ServerStats:
         self.rid_lock = Lock()
         self.rid = 0
 
+        self.data_based_on_token = defaultdict(list)
+
     def get_new_rid(self):
         new_rid = -1
         with self.rid_lock:
@@ -44,6 +47,14 @@ class ServerStats:
             self.total_elapsed += elapsed
             self.total_requests += 1
             self.total_latency += elapsed/tokens
+            self.data_based_on_token[tokens].append(elapsed)
+
+    def token_breakdown(self):
+        ret = None
+        with self.stats_lock:
+            if len(self.data_based_on_token) > 0:
+                ret = self.data_based_on_token
+        return ret
 
     def latency_per_token(self):
         # average time a user has to wait for an individual token
