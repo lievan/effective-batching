@@ -93,5 +93,6 @@ To launch a single request, run:
 
 ```python3 client.py --prompt "hi" --numtokens 10```
 
+
 https://github.com/lievan/effective-batching/assets/42917263/f1971944-2c8e-4cb2-8563-691c2958c76a
 
