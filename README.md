@@ -7,6 +7,8 @@ Dynamic batching algorithm is modeled after the [Orca](https://www.usenix.org/co
 
 Use the ```Instructions``` section below for full tutorial on how to run experiments.
 
+https://github.com/lievan/effective-batching/assets/42917263/45cfdf73-9d18-43c1-9d27-e141f8c4be0d
+
 ### Server Implementation
 The server exposes a ```/inference``` endpoint that takes a request with a prompt and # of completion tokens to generate. The server does not support terminating a generation based on certain end tokens. A simple ```stats``` endpoint also exists to display server stats for tracking experiment results.
 
@@ -78,4 +80,11 @@ Install the requirements in the ```requirements.txt``` file.
 2. Set ```IP=<YOUR_GCE_INSTANCE_EXTERNAL_IP>``` in the file.
 
 The client script will read from the ```IP``` environment variable to format the request.
+
+
+**Run the client script**
+
+```python3 client.py```
+
+https://github.com/lievan/effective-batching/assets/42917263/f1971944-2c8e-4cb2-8563-691c2958c76a
 
