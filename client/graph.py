@@ -1,7 +1,7 @@
 
 
 token_data_dynamic = []
-with open('token_data_dynamic.csv', 'r') as f:
+with open('results/token_data_dynamic.csv', 'r') as f:
     lns = f.readlines()
     for l in lns:
         token_len, tme = l.strip().split(',')
@@ -15,7 +15,7 @@ dynamic_y = [i[1] for i in token_data_dynamic]
 
 
 token_data_nobatch = []
-with open('token_data_nobatch.csv', 'r') as f:
+with open('results/token_data_nobatch.csv', 'r') as f:
     lns = f.readlines()
     for l in lns:
         token_len, tme = l.strip().split(',')
@@ -29,7 +29,7 @@ nobatch_x = [i[0] for i in token_data_nobatch]
 nobatch_y = [i[1] for i in token_data_nobatch]
 
 token_data_static = []
-with open('token_data_static.csv', 'r') as f:
+with open('results/token_data_static.csv', 'r') as f:
     lns = f.readlines()
     for l in lns:
         token_len, tme = l.strip().split(',')

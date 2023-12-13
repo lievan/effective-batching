@@ -14,13 +14,10 @@ import tiktoken
 from generate.generate import static_batch_generate, generate, dynamic_batch_generate
 from generate.generate_mock import mock_generate, mock_dynamic_batch_generate, mock_static_batch_generate
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-KEY = os.getenv('KEY')
-
 BATCHING = os.getenv("BATCHING")
+
+if BATCHING not in ["static", "dynamic", "nobatch"]:
+    BATCHING = "nobatch"
 
 mock = False
 
@@ -47,12 +44,6 @@ def home():
 
 @app.route('/inference', methods=['POST'])
 def inference():
-    # request processing
-    key = request.headers.get('Authorization')
-    if key != KEY:
-        print("SERVER LOGS: Got an inference request with incorrect auth key")
-        return 'no' # change l8ter
-
     data = json.loads(request.get_data())
 
     prompt = data['prompt']

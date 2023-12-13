@@ -10,7 +10,6 @@ from collections import defaultdict
 
 load_dotenv()
 
-KEY = os.getenv('KEY')
 IP = os.getenv('IP')
 
 NUM_SAMPLES=100
@@ -21,10 +20,9 @@ data_based_on_token = defaultdict(list)
 
 def inference_request(prompt, num_tokens, rid):
     print("LOGS: Request {} with ~{} prompt len, {} tokens".format(rid, len(prompt.split(' ')), num_tokens))
-    auth_headers = {'Authorization':KEY}
     inference_req = {'prompt':prompt, 'num_tokens':num_tokens}
     time_start = time.time()
-    r = requests.post('http://{}:8500/inference'.format(IP), json=inference_req, headers=auth_headers)
+    r = requests.post('http://{}:8500/inference'.format(IP), json=inference_req)
     data_based_on_token[num_tokens].append(time.time() - time_start)
     print("="*50)
     print("LOGS: Got completion for request {}".format(rid))
@@ -49,7 +47,7 @@ r = requests.get('http://{}:8500/stats'.format(IP))
 print("\n\n\n======== END STATS ========\n\n\n")
 stats = r.json()
 print(stats)
-with open('stats.txt', 'w') as f:
+with open('results/stats.txt', 'w') as f:
     f.write(str(stats))
 
 # with open('token_data_dynamic.csv', 'w') as f:
