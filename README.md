@@ -25,7 +25,7 @@ This ```Inference``` object is returned by the ```enqueue``` function. Each ```I
 ### Client
 Client code can be found in the ```client``` folder.
 
-```client.py``` is a script that launches 100 inference requests to the server, waits for the requests to finish, and then prints the results from the server ```/stats``` endpoint.
+```client.py``` is a script that launches inference requests to the server, waits for the requests to finish, and then prints the results from the server ```/stats``` endpoint.
 
 ```data.py``` contains a ```PromptData``` class that is used by the client script. ```PromptData``` generates the inference data used for requests.
 
@@ -84,7 +84,14 @@ The client script will read from the ```IP``` environment variable to format the
 
 **Run the client script**
 
-```python3 client.py```
+To launch ```numsamples``` requests and display request stats, run:
+
+```python3 client.py --numsamples 100```
+
+
+To launch a single request, run:
+
+```python3 client.py --prompt "hi" --numtokens 10```
 
 https://github.com/lievan/effective-batching/assets/42917263/f1971944-2c8e-4cb2-8563-691c2958c76a
 
