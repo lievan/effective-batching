@@ -7,14 +7,19 @@ from threading import Thread
 from data import PromptData
 from dotenv import load_dotenv
 from collections import defaultdict
+import argparse
 
 load_dotenv()
 
+parser = argparse.ArgumentParser(description='Test Client')
+parser.add_argument('--numsamples', default=100, type=int, help='number of requests to make')
+parser.add_argument('--prompt', default=None, type=str, help='prompt to make an inference on')
+parser.add_argument('--numtokens', default=None, type=int, help='number of tokens to generate')
+
+
+args = parser.parse_args()
+
 IP = os.getenv('IP')
-
-NUM_SAMPLES=100
-
-prompt_data = PromptData(num_samples=NUM_SAMPLES)
 
 data_based_on_token = defaultdict(list)
 
@@ -30,25 +35,38 @@ def inference_request(prompt, num_tokens, rid):
     print("="*50)
     print("")
 
-threads = []
-for i in range(NUM_SAMPLES):
-    prompt, num_tokens = prompt_data.get_next_sample()
-    run_inference = Thread(target=inference_request, kwargs={"rid": i, "prompt": "Request {}".format(i), "num_tokens": num_tokens})
-    run_inference.start()
-    threads.append(run_inference)
-    if i % 5 == 0:
-        wait = random.random()
-        time.sleep(wait * 5)
 
-for thread in threads:
-    thread.join()
+def launch_requests():
+    NUM_SAMPLES=args.numsamples
 
-r = requests.get('http://{}:8500/stats'.format(IP))
-print("\n\n\n======== END STATS ========\n\n\n")
-stats = r.json()
-print(stats)
-with open('results/stats.txt', 'w') as f:
-    f.write(str(stats))
+    prompt_data = PromptData(num_samples=NUM_SAMPLES)
+
+    threads = []
+    for i in range(NUM_SAMPLES):
+        prompt, num_tokens = prompt_data.get_next_sample()
+        run_inference = Thread(target=inference_request, kwargs={"rid": i, "prompt": prompt, "num_tokens": num_tokens})
+        run_inference.start()
+        threads.append(run_inference)
+        if i % 5 == 0:
+            wait = random.random()
+            time.sleep(wait * 5)
+
+    for thread in threads:
+        thread.join()
+
+    r = requests.get('http://{}:8500/stats'.format(IP))
+    print("\n\n\n======== END STATS ========\n\n\n")
+    stats = r.json()
+    print(stats)
+    with open('results/stats.txt', 'w') as f:
+        f.write(str(stats))
+
+if args.prompt and args.numtokens:
+    print("Making single inference, numsamples arg ignored if specified")
+    inference_request(args.prompt, args.numtokens, 0)
+else:
+    launch_requests()
+
 
 # with open('token_data_dynamic.csv', 'w') as f:
 #     for data_len, lst in data_based_on_token.items():
