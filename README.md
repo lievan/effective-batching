@@ -5,7 +5,7 @@ This repo uses gunicorn + flask to host a ```gpt-2-medium``` model implemented u
 
 Dynamic batching algorithm is modeled after the [Orca](https://www.usenix.org/conference/osdi22/presentation/yu) paper.
 
-Use the ```Code Instructions``` section below for full tutorial on how to run experiments.
+Use the ```Instructions``` section below for full tutorial on how to run experiments.
 
 ### Server Implementation
 The server exposes a ```/inference``` endpoint that takes a request with a prompt and # of completion tokens to generate. The server does not support terminating a generation based on certain end tokens. A simple ```stats``` endpoint also exists to display server stats for tracking experiment results.
