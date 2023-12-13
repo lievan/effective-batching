@@ -33,7 +33,7 @@ Client code can be found in the ```client``` folder.
 
 **Google Compute Engine VM Setup**
 
-The GCE VM instance needs to be configured to serve the flask server. If you only want to run the server locally, then steps 2-5 are not needed.
+The GCE VM instance needs to be configured to serve the flask server. If you only want to run the server locally, then steps 2-4 are not needed.
 
 1. Make sure the instance has a GPU
 
