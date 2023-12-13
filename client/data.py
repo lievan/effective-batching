@@ -2,6 +2,7 @@ from numpy import random
 import math
 from threading import Lock
 import random
+
 class PromptData:
 
   def __init__(self, num_samples):
