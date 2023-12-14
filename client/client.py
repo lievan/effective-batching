@@ -12,7 +12,10 @@ import argparse
 load_dotenv()
 
 parser = argparse.ArgumentParser(description='Test Client')
+parser.add_argument('--wait', default=1, type=int, help='sleep a random amount between 0 and wait (s) in between requests')
 parser.add_argument('--numsamples', default=100, type=int, help='number of requests to make')
+parser.add_argument('--numtokens_range', nargs="*", default=[1, 25, 100], type=int, help='possible # of tokens')
+parser.add_argument('--selection', default='random', type=str, help='selection strategy for num tokens')
 parser.add_argument('--prompt', default=None, type=str, help='prompt to make an inference on')
 parser.add_argument('--numtokens', default=None, type=int, help='number of tokens to generate')
 
@@ -37,19 +40,23 @@ def inference_request(prompt, num_tokens, rid):
 
 
 def launch_requests():
-    NUM_SAMPLES=args.numsamples
-
-    prompt_data = PromptData(num_samples=NUM_SAMPLES)
+    num_samples = args.numsamples
+    num_tokens_range = args.numtokens_range
+    selection = args.selection
+    print(selection)
+    prompt_data = PromptData(num_samples=num_samples, num_tokens_range=num_tokens_range, selection=selection)
 
     threads = []
-    for i in range(NUM_SAMPLES):
+    for i in range(num_samples):
         prompt, num_tokens = prompt_data.get_next_sample()
         run_inference = Thread(target=inference_request, kwargs={"rid": i, "prompt": prompt, "num_tokens": num_tokens})
         run_inference.start()
         threads.append(run_inference)
-        if i % 5 == 0:
-            wait = random.random()
-            time.sleep(wait * 5)
+        wait = random.random()
+        time.sleep(wait * args.wait)
+        # if i % 5 == 0:
+        #     wait = random.random()
+        #     time.sleep(wait * 5)
 
     for thread in threads:
         thread.join()
