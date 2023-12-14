@@ -4,6 +4,7 @@ import torch
 def mock_generate(inference, model):
     return " ".join(["word" for _ in range(inference.num_tokens)])
 
+
 def mock_dynamic_batch_generate(next_batch, model):
     finished = []
     in_progress = []
@@ -14,6 +15,7 @@ def mock_dynamic_batch_generate(next_batch, model):
         else:
             in_progress.append(inference)
     return finished, in_progress
+
 
 def mock_static_batch_generate(batch, model):
     res = []

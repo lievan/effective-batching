@@ -6,14 +6,15 @@ from collections import defaultdict
 
 cuda_time = torch.cuda.is_available()
 
+
 def get_time():
     if cuda_time:
         torch.cuda.synchronize()
         return time.perf_counter()
     return time.time()
 
-class ServerStats:
 
+class ServerStats:
     def __init__(self):
         self.stats_lock = Lock()
         self.total_tokens = 0
@@ -46,7 +47,7 @@ class ServerStats:
             self.total_tokens += tokens
             self.total_elapsed += elapsed
             self.total_requests += 1
-            self.total_latency += elapsed/tokens
+            self.total_latency += elapsed / tokens
             self.data_based_on_token[tokens].append(elapsed)
 
     def token_breakdown(self):
@@ -62,7 +63,7 @@ class ServerStats:
         if self.total_requests <= 0:
             return ret
         with self.stats_lock:
-            ret = self.total_latency/self.total_requests
+            ret = self.total_latency / self.total_requests
         return ret
 
     def throughput(self):
@@ -71,5 +72,5 @@ class ServerStats:
         if self.total_elapsed <= 0:
             return ret
         with self.stats_lock:
-            ret = self.total_tokens/self.total_elapsed
+            ret = self.total_tokens / self.total_elapsed
         return ret

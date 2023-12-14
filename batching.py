@@ -6,6 +6,7 @@ from threading import Event
 
 MAX_BATCH_SIZE = 128
 
+
 class Inference:
     # a shared object used for nobatch, static, and dynamic batching
     def __init__(self, job_id, prompt, num_tokens, enc, device):
@@ -13,17 +14,19 @@ class Inference:
         self.job_id = job_id
         self.enc = enc
         self.prompt = prompt
-        self.data = torch.tensor(self.enc.encode(prompt), dtype=torch.long, device=device)
+        self.data = torch.tensor(
+            self.enc.encode(prompt), dtype=torch.long, device=device
+        )
         self.num_tokens = num_tokens
-        self.counter = 0 # counter to keep track of when prompt is finished
+        self.counter = 0  # counter to keep track of when prompt is finished
         self.event_obj = Event()
 
     def add_token(self, token):
-      self.counter += 1
-      self.data = torch.cat((self.data, token))
-      if self.counter == self.num_tokens:
-        return True
-      return False
+        self.counter += 1
+        self.data = torch.cat((self.data, token))
+        if self.counter == self.num_tokens:
+            return True
+        return False
 
     def finished(self):
         self.completion = self.enc.decode(self.data.tolist())
@@ -36,6 +39,7 @@ class Inference:
     def wait_for_completion(self):
         self.event_obj.wait(1000)
         return self.completion
+
 
 class BatchingManager:
     def __init__(self, model, generation_fn):
@@ -50,8 +54,9 @@ class BatchingManager:
     def enqueue(self, prompt, num_tokens):
         new_inference = None
         with self.queue_mutex:
-            new_inference = Inference(self.simple_id, prompt, num_tokens, 
-                                    self.model.enc, self.model.device)
+            new_inference = Inference(
+                self.simple_id, prompt, num_tokens, self.model.enc, self.model.device
+            )
             self.queue.append(new_inference)
             self.simple_id += 1
         return new_inference
@@ -85,7 +90,6 @@ class BatchingManager:
                 for item in next_batch:
                     sizes[(len(item.data), item.num_tokens)].append(item)
                 for _, batch in sizes.items():
-
                     while len(batch) > MAX_BATCH_SIZE:
                         inference_batch = batch[:MAX_BATCH_SIZE]
                         batch = batch[MAX_BATCH_SIZE:]
@@ -96,7 +100,7 @@ class BatchingManager:
                     results = self.generation_fn(batch, self.model)
                     for completion, inference in results:
                         inference.finished_with(completion)
-      
+
             time.sleep(0.01)
 
     def dynamic_batching_loop(self):
