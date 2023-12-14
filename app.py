@@ -14,15 +14,20 @@ import tiktoken
 from generate.generate import static_batch_generate, generate, dynamic_batch_generate
 from generate.generate_mock import mock_generate, mock_dynamic_batch_generate, mock_static_batch_generate
 
+# Expect batching type to be stored in BATCHING env var
+# else defaults to ``nobatch``
 BATCHING = os.getenv("BATCHING")
 
 if BATCHING not in ["static", "dynamic", "nobatch"]:
     BATCHING = "nobatch"
 
+# set mock=True to test without usng an actual gpt model
+# if mock=True, stub functions are used in place of gpt
 mock = False
 
 app = Flask(__name__)
 
+# server_stats is a python class that keeps track of experiment stats
 server_stats = ServerStats()
 
 @app.route('/stats', methods=['GET'])
@@ -30,6 +35,7 @@ def stats():
     print("SERVER LOGS: Handling stats request")
     latency_per_token = server_stats.latency_per_token()
     throughput = server_stats.throughput()
+    # break down stats by num tokens requested
     with open('data/token_data_{}.csv'.format(BATCHING), 'w') as f:
         for data_len, lst in server_stats.token_breakdown().items():
             f.write("{},".format(data_len))
@@ -54,6 +60,7 @@ def inference():
     # make inference
     rid = server_stats.start_request(num_tokens)
     inference = manager.enqueue(prompt, num_tokens)
+    # wait for inference to be completed
     completion = inference.wait_for_completion()
     server_stats.finish_request(rid)
     print("SERVER LOGS: FINISHED, prompt len ~{} | requesting {} tokens".format(len(prompt.split(' ')), num_tokens))

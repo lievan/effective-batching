@@ -7,6 +7,7 @@ from threading import Event
 MAX_BATCH_SIZE = 128
 
 class Inference:
+    # a shared object used for nobatch, static, and dynamic batching
     def __init__(self, job_id, prompt, num_tokens, enc, device):
         self.completion = None
         self.job_id = job_id

@@ -21,7 +21,7 @@ def generate(inference, model):
 
 @torch.no_grad()
 def static_batch_generate(batch, model):
-    # completes generation for batch inference
+    # completes generation for static batch inference
     desired_tokens = []
     prompts = []
     for inference in batch:
@@ -32,7 +32,6 @@ def static_batch_generate(batch, model):
     stacked = torch.stack([torch.tensor(start_ids, dtype=torch.long, device=model.device) for start_ids in encoded_prompts])
 
     results = []
-    tokens_generated = 0
     max_desired_tokens = max(desired_tokens)
 
     if LOGGING: print("INFERENCE LOGS: Making inference (static batching): ")
@@ -52,6 +51,7 @@ def static_batch_generate(batch, model):
 def static_batch_generate_v2(batch, model):
     # supports different num_tokens for the batch
     # completes generation for batch inference
+    # (NOT USED IN EXPERIMENTS)
     desired_tokens = []
     prompts = []
     for inference in batch:
