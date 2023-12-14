@@ -12,6 +12,8 @@ https://github.com/lievan/effective-batching/assets/42917263/45cfdf73-9d18-43c1-
 ### Server Implementation
 The server exposes a ```/inference``` endpoint that takes a request with a prompt and # of completion tokens to generate. The server does not support terminating a generation based on certain end tokens. A simple ```stats``` endpoint also exists to display server stats for tracking experiment results.
 
+#### Inference request scheduling
+
 ```app.py``` is the main script that loads the model and defines the server logic. 
 
 ```batching.py``` contains two classes: ```Inference``` and ```BatchingManager```. 
@@ -21,6 +23,12 @@ The server exposes a ```/inference``` endpoint that takes a request with a promp
 New requests are enqueued using the BatchingManager's ```enqueue``` function. Requests are transformed into ```Inference``` objects that hold onto the request data as well as metadata used by the ```BatchingManager```. 
 
 This ```Inference``` object is returned by the ```enqueue``` function. Each ```Inference``` object stores a reference to a unique ```threading.Event``` object that will be used to signal when the inference has finished.
+
+#### Inference generation implementations
+
+Implementations for nobatch, static, and dynamic generations can be found in the ```generate``` folder.
+
+These generation functions are centered around a ```ServerModel``` object defined in the ```model.py``` file. Dynamic batching requires a ```DynamicBatchingServerModel``` object, which extends ```ServerModel``` with modified attention and batch inference functions.
 
 ### Client
 Client code can be found in the ```client``` folder.
