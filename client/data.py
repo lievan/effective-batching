@@ -1,7 +1,7 @@
 from numpy import random
 import math
 from threading import Lock
-import random
+import random as r
 
 class PromptData:
 
@@ -21,8 +21,11 @@ class PromptData:
       return next_sample
 
   def generate_samples_range(self, num_samples, num_tokens_range):
+      # default unused -- wrote this function for some experiments
+      # where the range of tokens were limited to make static batching
+      # easier.
       for i in range(num_samples):
-          target = int(random.choice(num_tokens_range))
+          target = int(r.choice(num_tokens_range))
           prompt_len = target
           num_tokens = target
           prompt = ""
@@ -32,10 +35,10 @@ class PromptData:
           self.prompts.append((prompt, num_tokens))
 
   def generate_samples_normal(self, num_samples):
-      possible_num_tokens = random.normal(loc=100, size=(num_samples), scale=150)
-      possible_prompt_len = random.normal(loc=100, size=(num_samples), scale=150)
+      possible_num_tokens = random.normal(loc=50, size=(num_samples), scale=50)
+      possible_prompt_len = random.normal(loc=10, size=(num_samples), scale=10)
 
-      for prompt_len, num_tokens in zip(possible_num_tokens, possible_prompt_len):
+      for num_tokens, prompt_len in zip(possible_num_tokens, possible_prompt_len):
           prompt_len = max(1, abs(math.ceil(prompt_len)))
           num_tokens = max(1, abs(math.ceil(num_tokens)))
           prompt = ""
@@ -45,6 +48,7 @@ class PromptData:
           self.prompts.append((prompt, num_tokens))
           
   def generate_samples_buckets(self):
+      # default unused
       buckets = [i for i in range(5, 150, 5)]
       vals = []
       for bucket in buckets:

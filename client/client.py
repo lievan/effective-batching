@@ -66,12 +66,3 @@ if args.prompt and args.numtokens:
     inference_request(args.prompt, args.numtokens, 0)
 else:
     launch_requests()
-
-
-# with open('token_data_dynamic.csv', 'w') as f:
-#     for data_len, lst in data_based_on_token.items():
-#         f.write("{},".format(data_len))
-#         f.write("{}".format(sum(lst)/len(lst)))
-#         # for t in lst:
-#         #     f.write("{},".format(lst))
-#         f.write("\n")
