@@ -12,6 +12,10 @@ https://github.com/lievan/effective-batching/assets/42917263/45cfdf73-9d18-43c1-
 ### Server Implementation
 The server exposes a ```/inference``` endpoint that takes a request with a prompt and # of completion tokens to generate. The server does not support terminating a generation based on certain end tokens. A simple ```stats``` endpoint also exists to display server stats for tracking experiment results.
 
+
+<img width="702" alt="image" src="https://github.com/lievan/effective-batching/assets/42917263/7f05989f-5dea-4f1d-88f7-403c45df4b71">
+
+
 #### Inference request scheduling
 
 ```app.py``` is the main script that loads the model and defines the server logic. 
