@@ -55,7 +55,7 @@ After the VM is created, ssh into the instance and clone this repo.
 
 1. Make and activate a Python virtual environment
 2. ```cd``` into the ```effective-batching``` repo root directory
-3. Run ```pip install requirements.txt```
+3. Run ```pip install -r requirements.txt```
 
 **Launch the app**
 
