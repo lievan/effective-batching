@@ -108,3 +108,16 @@ To launch a single request, run:
 
 https://github.com/lievan/effective-batching/assets/42917263/f1971944-2c8e-4cb2-8563-691c2958c76a
 
+# Results
+
+Dynamic batching has the best throughput and latency-per-token. 
+
+_(The following table displays server stats after the client script makes ~ 1 request per second, 100 requests, # of requested tokens randomly sampled from normal distribution between 1 to 200 tokens)_
+
+<img width="828" alt="image" src="https://github.com/lievan/effective-batching/assets/42917263/13daa830-e288-448d-99fc-fd7246ae177d">
+
+
+**request latency vs number of requested tokens** - we can see dynamic batching is a lot more 'fair' compared to static and no batching in terms of serving smaller requests faster
+
+<img width="605" alt="image" src="https://github.com/lievan/effective-batching/assets/42917263/85ca0f01-7dad-419e-a8ca-d62f76493620">
+
